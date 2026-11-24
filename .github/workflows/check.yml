@@ -4,11 +4,14 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:
     name: lint and test
-    runs-on: ubuntu-latest
+    # 固定 22.04：ubuntu-latest 已升级到 26.04，setup-python 的 3.9 预编译包
+    # 尚无该发行版版本，会在“Set up Python”一步直接失败（与代码无关）。
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
