@@ -1,0 +1,29 @@
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+    "N801",
+    "N802",
+    "N803",
+    "N806",
+    "N815",
+    "N816",
+    "F401",
+    "F841",
+    "ERA001",
+    "F821",
+    "F823",
+    "F811",
+    "F601",
+    "F602",
+    "B006",
+    "B012",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
