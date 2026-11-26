@@ -43,6 +43,19 @@ def request(
         connection.close()
 
 
+def text_exchange(port: int, path: str) -> Tuple[int, str, str]:
+    """Return status, content type and decoded body for a non-JSON response."""
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    try:
+        connection.request("GET", path)
+        response = connection.getresponse()
+        body = response.read().decode("utf-8")
+        content_type = response.headers.get("Content-Type", "")
+        return response.status, content_type, body
+    finally:
+        connection.close()
+
+
 def raw_exchange(port: int, payload: bytes) -> bytes:
     """Send bytes verbatim so an invalid header can be reproduced."""
     with socket.create_connection(("127.0.0.1", port), timeout=5) as connection:
@@ -100,6 +113,25 @@ class HttpServiceTest(_ServerMixin, unittest.TestCase):
 
     def test_unknown_route_over_http(self):
         status, payload = request(self.port, "GET", "/nope")
+        self.assertEqual(status, 404)
+        self.assertEqual(payload["error"], "not_found")
+
+
+class DemoPageTest(_ServerMixin, unittest.TestCase):
+    def test_demo_page_is_served_at_root(self):
+        status, content_type, body = text_exchange(self.port, "/")
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", content_type)
+        self.assertIn("<!DOCTYPE html>", body)
+        self.assertIn("统计摘要演示", body)
+
+    def test_demo_page_keeps_the_api_route(self):
+        _, _, body = text_exchange(self.port, "/demo?from=readme")
+        self.assertIn("/api/summary", body)
+        self.assertNotIn('src="http', body)
+
+    def test_post_to_root_still_uses_the_json_service(self):
+        status, payload = request(self.port, "POST", "/", b"{}")
         self.assertEqual(status, 404)
         self.assertEqual(payload["error"], "not_found")
 

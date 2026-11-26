@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B0 统计摘要演示</title>
+<style>
+  :root {
+    --page: #f5f6f8;
+    --card: #ffffff;
+    --line: #e2e5e9;
+    --text: #1c2024;
+    --muted: #5f6b76;
+    --accent: #1d5f8a;
+    --accent-soft: #e8f1f7;
+    --danger: #a32d2d;
+    --danger-soft: #fcebeb;
+    --ok: #1d7a52;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px 20px 48px;
+    background: var(--page);
+    color: var(--text);
+    font: 14px/1.65 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  header, main { max-width: 1060px; margin: 0 auto; }
+  h1 { margin: 0 0 6px; font-size: 20px; font-weight: 600; letter-spacing: .2px; }
+  .sub { margin: 0; color: var(--muted); font-size: 13px; }
+  .status {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 12px; padding: 4px 10px;
+    border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--muted);
+    font-size: 12px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #b4b2a9; }
+  .dot.ok { background: var(--ok); }
+  .dot.bad { background: var(--danger); }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px 18px 20px;
+  }
+  h2 { margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 1px; }
+  label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
+  textarea {
+    width: 100%; min-height: 96px; resize: vertical; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--mono); font-size: 13px; line-height: 1.7;
+    color: var(--text); background: #fbfcfd;
+  }
+  textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 14px; }
+  .presets button {
+    padding: 5px 10px; font-size: 12px; color: var(--muted); cursor: pointer;
+    background: #fff; border: 1px solid var(--line); border-radius: 999px;
+  }
+  .presets button:hover { border-color: var(--accent); color: var(--accent); }
+  .actions { display: flex; gap: 10px; }
+  button.primary {
+    padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: #fff; background: var(--accent); border: 1px solid var(--accent);
+    border-radius: 8px;
+  }
+  button.ghost {
+    padding: 9px 16px; font-size: 13px; cursor: pointer;
+    color: var(--muted); background: #fff; border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .hint { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
+  code { font-family: var(--mono); font-size: 12px; }
+  .big-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .big {
+    padding: 12px 10px; background: #fbfcfd;
+    border: 1px solid var(--line); border-radius: 8px; text-align: center;
+  }
+  .big .num { display: block; font-family: var(--mono); font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+  .big .label { display: block; margin-top: 4px; font-size: 11px; color: var(--muted); }
+  dl.small-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 14px;
+    margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line);
+  }
+  dl.small-grid div { display: flex; justify-content: space-between; gap: 8px; }
+  dl.small-grid dt { font-size: 12px; color: var(--muted); }
+  dl.small-grid dd { margin: 0; font-family: var(--mono); font-size: 12px; }
+  .outliers { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .block-label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 2px 9px; border-radius: 999px;
+    background: var(--danger-soft); color: var(--danger);
+    font-family: var(--mono); font-size: 12px;
+  }
+  .chip.none { background: var(--accent-soft); color: var(--accent); }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+  pre {
+    margin: 8px 0 0; padding: 10px 12px; overflow: auto;
+    background: #fbfcfd; border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--mono); font-size: 12px; line-height: 1.65;
+  }
+  .error {
+    padding: 12px 14px; border-radius: 8px;
+    background: var(--danger-soft); border: 1px solid #f0c9c9;
+  }
+  .error .code { font-family: var(--mono); font-weight: 600; color: var(--danger); }
+  .error p { margin: 6px 0 0; font-size: 12px; color: #6d3a3a; }
+  .empty { padding: 26px 0; text-align: center; color: #9aa3ab; font-size: 13px; }
+  .hidden { display: none; }
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; }
+    .big-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>统计摘要演示</h1>
+  <p class="sub">输入一组测量值，得到计数、均值、中位数、样本标准差、四分位与 IQR 异常值提示。同一组数字也可用 curl 复现，两者走同一条接口。</p>
+  <span class="status"><span id="health-dot" class="dot"></span><span id="health-text">正在检查服务…</span></span>
+</header>
+
+<main>
+  <section class="card">
+    <h2>输入</h2>
+    <label for="values">测量值：逗号、空格或换行分隔；也可直接粘贴 JSON 数组</label>
+    <textarea id="values" spellcheck="false">1, 2, 3, 4, 5, 100</textarea>
+    <div class="presets">
+      <button type="button" data-preset="1, 2, 3, 4">正常四样本</button>
+      <button type="button" data-preset="1, 2, 3, 4, 5, 100">含一个异常值</button>
+      <button type="button" data-preset="7">只有 1 个样本</button>
+      <button type="button" data-preset="">空数组</button>
+      <button type="button" data-preset="a, 2">非数值</button>
+    </div>
+    <div class="actions">
+      <button type="button" id="run" class="primary">计算摘要</button>
+      <button type="button" id="clear" class="ghost">清空结果</button>
+    </div>
+    <p class="hint">请求：<code id="request-line">POST /api/summary</code>　快捷键 Ctrl + Enter</p>
+  </section>
+
+  <section class="card">
+    <h2>结果</h2>
+    <div id="error" class="error hidden"></div>
+    <p id="empty" class="empty">还没有结果。点「计算摘要」。</p>
+    <div id="result" class="hidden">
+      <div class="big-grid">
+        <div class="big"><span class="num" id="r-count">-</span><span class="label">计数 count</span></div>
+        <div class="big"><span class="num" id="r-mean">-</span><span class="label">均值 mean</span></div>
+        <div class="big"><span class="num" id="r-median">-</span><span class="label">中位数 median</span></div>
+        <div class="big"><span class="num" id="r-std">-</span><span class="label">样本标准差</span></div>
+      </div>
+      <dl class="small-grid">
+        <div><dt>最小值</dt><dd id="r-min">-</dd></div>
+        <div><dt>最大值</dt><dd id="r-max">-</dd></div>
+        <div><dt>Q1</dt><dd id="r-q1">-</dd></div>
+        <div><dt>Q3</dt><dd id="r-q3">-</dd></div>
+        <div><dt>IQR</dt><dd id="r-iqr">-</dd></div>
+        <div><dt>异常值数</dt><dd id="r-outlier-count">-</dd></div>
+      </dl>
+      <div class="outliers">
+        <span class="block-label">异常值（超出 1.5 × IQR 栅栏）</span>
+        <div class="chips" id="r-outliers"></div>
+      </div>
+      <details>
+        <summary>原始响应 JSON（可逐字核对）</summary>
+        <pre id="r-json"></pre>
+      </details>
+      <p class="hint" id="r-meta"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  var textarea = $("values");
+
+  function setText(id, value) { $(id).textContent = value; }
+
+  function showError(status, code, message, extra) {
+    var box = $("error");
+    box.textContent = "";
+    var head = document.createElement("div");
+    var codeSpan = document.createElement("span");
+    codeSpan.className = "code";
+    codeSpan.textContent = "HTTP " + status + " · " + code;
+    head.appendChild(codeSpan);
+    var body = document.createElement("p");
+    body.textContent = message;
+    box.appendChild(head);
+    box.appendChild(body);
+    if (extra) {
+      var meta = document.createElement("p");
+      meta.textContent = extra;
+      box.appendChild(meta);
+    }
+    box.classList.remove("hidden");
+    $("result").classList.add("hidden");
+    $("empty").classList.add("hidden");
+  }
+
+  function hideError() {
+    $("error").classList.add("hidden");
+  }
+
+  function parseValues(text) {
+    var trimmed = text.trim();
+    if (trimmed === "") { return []; }
+    if (trimmed.charAt(0) === "[") { return JSON.parse(trimmed); }
+    return trimmed.split(/[\s,，、;；]+/).filter(Boolean).map(function (token) {
+      var num = Number(token);
+      return Number.isFinite(num) ? num : token;
+    });
+  }
+
+  function render(data, elapsed) {
+    setText("r-count", String(data.count));
+    setText("r-mean", String(data.mean));
+    setText("r-median", String(data.median));
+    setText("r-std", String(data.std_sample));
+    setText("r-min", String(data.min));
+    setText("r-max", String(data.max));
+    setText("r-q1", String(data.q1));
+    setText("r-q3", String(data.q3));
+    setText("r-iqr", String(data.iqr));
+    setText("r-outlier-count", String(data.outlier_count));
+
+    var chips = $("r-outliers");
+    chips.textContent = "";
+    if (data.outliers.length === 0) {
+      var none = document.createElement("span");
+      none.className = "chip none";
+      none.textContent = "无";
+      chips.appendChild(none);
+    } else {
+      data.outliers.forEach(function (value) {
+        var chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = String(value);
+        chips.appendChild(chip);
+      });
+    }
+
+    $("r-json").textContent = JSON.stringify(data, null, 2);
+    setText("r-meta", "HTTP 200 · 往返 " + elapsed + " ms · 服务端保留 6 位小数");
+
+    hideError();
+    $("empty").classList.add("hidden");
+    $("result").classList.remove("hidden");
+  }
+
+  function run() {
+    var values;
+    try {
+      values = parseValues(textarea.value);
+    } catch (err) {
+      showError("本地", "input_not_array", "以 [ 开头但不是合法 JSON：" + err.message);
+      return;
+    }
+    var payload = JSON.stringify({ values: values });
+    $("request-line").textContent = "POST /api/summary　" + payload;
+    var started = performance.now();
+    fetch("/api/summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        return { status: response.status, data: data };
+      });
+    }).then(function (result) {
+      var elapsed = Math.round(performance.now() - started);
+      if (result.status !== 200) {
+        showError(result.status, result.data.error, result.data.message,
+          "往返 " + elapsed + " ms　同一请求可用 curl 复现。");
+        return;
+      }
+      render(result.data, elapsed);
+    }).catch(function (err) {
+      showError("本地", "network_error", "请求未送达：" + err.message);
+    });
+  }
+
+  function checkHealth() {
+    fetch("/health").then(function (response) {
+      return response.json().then(function (data) {
+        return { status: response.status, data: data };
+      });
+    }).then(function (result) {
+      var healthy = result.status === 200 && result.data.status === "ok";
+      $("health-dot").className = "dot " + (healthy ? "ok" : "bad");
+      setText("health-text", healthy
+        ? "服务正常 · GET /health " + result.status
+        : "服务异常 · GET /health " + result.status);
+    }).catch(function () {
+      $("health-dot").className = "dot bad";
+      setText("health-text", "无法连接服务，请确认服务已启动");
+    });
+  }
+
+  document.querySelectorAll(".presets button").forEach(function (button) {
+    button.addEventListener("click", function () {
+      textarea.value = button.getAttribute("data-preset");
+      textarea.focus();
+    });
+  });
+  $("run").addEventListener("click", run);
+  $("clear").addEventListener("click", function () {
+    hideError();
+    $("result").classList.add("hidden");
+    $("empty").classList.remove("hidden");
+    $("request-line").textContent = "POST /api/summary";
+  });
+  textarea.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) { run(); }
+  });
+
+  checkHealth();
+  run();
+</script>
+</body>
+</html>

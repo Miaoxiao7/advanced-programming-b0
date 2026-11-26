@@ -3,11 +3,20 @@
 import argparse
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any, Dict, Optional, Type
 
 from b0_stats.service import JSON_CONTENT_TYPE, handle
 
 MAX_BODY_BYTES = 1_000_000
+HTML_CONTENT_TYPE = "text/html; charset=utf-8"
+DEMO_ROUTES = ("/", "/demo")
+DEMO_FILE = Path(__file__).with_name("demo.html")
+
+
+def demo_page() -> str:
+    """Return the static demo page stored next to this module."""
+    return DEMO_FILE.read_text(encoding="utf-8")
 
 
 class SummaryHandler(BaseHTTPRequestHandler):
@@ -33,6 +42,10 @@ class SummaryHandler(BaseHTTPRequestHandler):
             return None
 
     def _respond(self, method: str) -> None:
+        route = self.path.split("?", 1)[0]
+        if method == "GET" and route in DEMO_ROUTES:
+            self._write_html(demo_page())
+            return
         length = self._content_length()
         if length is None:
             self._write(400, {"error": "invalid_length", "message": "bad header"})
@@ -49,6 +62,15 @@ class SummaryHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", JSON_CONTENT_TYPE)
         self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def _write_html(self, document: str) -> None:
+        raw = document.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", HTML_CONTENT_TYPE)
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(raw)
 
@@ -70,6 +92,7 @@ def main() -> None:
     server = make_server(args.host, args.port)
     host, port = server.server_address[:2]
     print("ready: listening on http://{}:{}".format(host, port), flush=True)
+    print("demo: http://{}:{}/".format(host, port), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
