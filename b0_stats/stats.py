@@ -63,8 +63,23 @@ def percentile(sorted_values: Sequence[float], fraction: float) -> float:
     return lower_value + (upper_value - lower_value) * weight
 
 
+def zero_crossing_rate(values: Sequence[float]) -> float:
+    """Return the share of adjacent pairs that change sign, in input order.
+
+    Zero is counted as non-negative, so ``[0, 1]`` has no crossing while
+    ``[-1, 1]`` has one. The rate is the crossing count divided by ``n - 1``,
+    which needs at least two samples; callers validate that beforehand.
+    """
+    non_negative = [value >= 0 for value in values]
+    crossings = 0
+    for previous, current in zip(non_negative, non_negative[1:]):
+        if previous != current:
+            crossings += 1
+    return crossings / (len(values) - 1)
+
+
 def summarise(raw: object) -> Dict[str, object]:
-    """Return count, mean, median, sample deviation and IQR fences."""
+    """Return count, central tendency, dispersion, extremes and IQR fences."""
     values = coerce_values(raw)
     ordered = sorted(values)
     count = len(ordered)
@@ -79,16 +94,23 @@ def summarise(raw: object) -> Dict[str, object]:
     outliers = [
         value for value in ordered if value < lower_fence or value > upper_fence
     ]
+    mean_square = sum(value * value for value in values) / count
     return {
         "count": count,
         "mean": round(mean, DECIMALS),
         "median": round(median, DECIMALS),
         "std_sample": round(math.sqrt(variance), DECIMALS),
+        "variance_sample": round(variance, DECIMALS),
+        "variance_population": round(variance * (count - 1) / count, DECIMALS),
+        "rms": round(math.sqrt(mean_square), DECIMALS),
         "min": ordered[0],
         "max": ordered[-1],
+        "peak": max(abs(value) for value in values),
+        "peak_to_peak": round(ordered[-1] - ordered[0], DECIMALS),
         "q1": round(q1, DECIMALS),
         "q3": round(q3, DECIMALS),
         "iqr": round(iqr, DECIMALS),
+        "zero_crossing_rate": round(zero_crossing_rate(values), DECIMALS),
         "outliers": outliers,
         "outlier_count": len(outliers),
     }

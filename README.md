@@ -32,9 +32,18 @@ B0 不套用团队项目的代码规模、六单元比较矩阵或 18 次训练�
 不带 `values` 参数、不产生 JSON 响应，因此不进入下表的错误码口径；对这两个路径使用 `POST`
 仍按普通请求处理，返回 `404 not_found`。
 
-摘要对象字段：`count`、`mean`、`median`、`std_sample`（样本标准差）、`min`、`max`、
-`q1`、`q3`、`iqr`、`outliers`（超出 1.5×IQR 栅栏的值）、`outlier_count`。
-除 `count` 与离散值外，数值统一保留 6 位小数。
+摘要对象字段按用途分五组：
+
+| 分组 | 字段 | 含义 |
+| --- | --- | --- |
+| 集中趋势 | `count`、`mean`、`median` | 样本数、算术均值、中位数 |
+| 离散程度 | `std_sample`、`variance_sample`、`variance_population`、`rms` | 样本标准差与样本方差（除以 `n−1`）、总体方差（除以 `n`）、均方根 |
+| 分位与极值 | `min`、`max`、`peak`、`peak_to_peak`、`q1`、`q3`、`iqr` | 最小/最大值、绝对峰值 `max(|x|)`、峰峰值 `max−min`、四分位与四分位距 |
+| 形态 | `zero_crossing_rate` | 过零率：相邻两点符号变化次数 `/(n−1)`，零计为非负，**按输入顺序**而非排序后统计 |
+| 异常值 | `outliers`、`outlier_count` | 超出 1.5×IQR 栅栏的值及其个数 |
+
+除 `count`、`min`、`max`、`peak`、`outliers` 与 `outlier_count` 外，计算量统一保留 6 位小数。
+`min` / `max` / `peak` 直接取自输入值，不做舍入。
 
 | 状态码 | `error` 代码 | 触发条件 |
 | --- | --- | --- |
@@ -67,6 +76,7 @@ B0 不套用团队项目的代码规模、六单元比较矩阵或 18 次训练�
 | `summarise` | `b0_stats/stats.py` | 计算摘要与异常值 | 先校验再排序计算，返回可直接序列化的字典 |
 | `coerce_values` | `b0_stats/stats.py` | 输入校验与类型归一 | 拒绝布尔值、非有限数、越界样本数 |
 | `percentile` | `b0_stats/stats.py` | 线性插值分位数 | 与常见数值库默认的线性插值口径一致 |
+| `zero_crossing_rate` | `b0_stats/stats.py` | 按输入顺序统计符号变化比例 | 零计为非负，分母为 `n−1` |
 | `StatsError` | `b0_stats/stats.py` | 携带稳定错误码的领域异常 | `code` 决定返回给客户端的 `error` 字段 |
 
 ## 四 运行
@@ -102,8 +112,9 @@ curl -s -X POST http://127.0.0.1:8000/api/summary \
 打印 `demo: http://127.0.0.1:8000/`，可直接复制该行地址。
 
 1. 页面打开即用默认样本 `1, 2, 3, 4, 5, 100` 自动计算一次，用于确认服务在线；
-2. 点「正常四样本」「含一个异常值」「只有 1 个样本」「空数组」「非数值」任一预设，再点
-   「计算摘要」（或按 Ctrl + Enter），结果区立即刷新；
+2. 点「正常四样本」「含一个异常值」「正负交替」「只有 1 个样本」「空数组」「非数值」任一预设，
+   再点「计算摘要」（或按 Ctrl + Enter），结果区立即刷新；「正负交替」用于观察过零率与
+   折线上的过零点标记；
 3. 展开「原始响应 JSON」逐字核对数值；点「清空结果」回到初始态。
 
 演示页与命令行调用的是同一个 `POST /api/summary`：输入框只做分隔符拆解（逗号、空格、换行，
@@ -119,7 +130,7 @@ python -m coverage run --source=b0_stats -m unittest discover -s tests
 python -m coverage report -m
 ```
 
-当前结果：41 个用例全部通过，静态检查与格式检查无告警，`b0_stats` 覆盖率 99%
+当前结果：47 个用例全部通过，静态检查与格式检查无告警，`b0_stats` 覆盖率 99%
 （唯一未覆盖行为 `app.py` 第 105 行 `if __name__ == "__main__"` 下的调用）。
 
 CI 位于 `.github/workflows/check.yml`，在每次推送 `main` 与每个 PR 上执行上述四步；

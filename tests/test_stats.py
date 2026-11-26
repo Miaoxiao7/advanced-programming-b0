@@ -40,6 +40,45 @@ class SummariseTest(unittest.TestCase):
         self.assertEqual(round(result["std_sample"], 6), result["std_sample"])
 
 
+class ExtendedMetricsTest(unittest.TestCase):
+    """Dispersion, extremes and waveform-shaped metrics, all checked by hand."""
+
+    def test_four_samples_dispersion(self):
+        result = summarise([1, 2, 3, 4])
+        self.assertAlmostEqual(result["variance_sample"], 5.0 / 3.0, places=6)
+        self.assertAlmostEqual(result["variance_population"], 1.25, places=6)
+        self.assertAlmostEqual(result["rms"], math.sqrt(7.5), places=6)
+
+    def test_extremes(self):
+        result = summarise([1, 2, 3, 4])
+        self.assertEqual(result["peak"], 4.0)
+        self.assertAlmostEqual(result["peak_to_peak"], 3.0, places=6)
+
+    def test_peak_uses_absolute_value(self):
+        self.assertEqual(summarise([-9, 1])["peak"], 9.0)
+        self.assertAlmostEqual(summarise([-9, 1])["peak_to_peak"], 10.0, places=6)
+
+    def test_zero_crossing_rate_counts_sign_changes(self):
+        self.assertAlmostEqual(
+            summarise([1, -1, 2, -2])["zero_crossing_rate"], 1.0, places=6
+        )
+        self.assertAlmostEqual(summarise([-1, 1])["zero_crossing_rate"], 1.0, places=6)
+
+    def test_zero_crossing_rate_of_same_sign_is_zero(self):
+        self.assertAlmostEqual(
+            summarise([1, 2, 3])["zero_crossing_rate"], 0.0, places=6
+        )
+        self.assertAlmostEqual(summarise([0, 1])["zero_crossing_rate"], 0.0, places=6)
+
+    def test_zero_crossing_rate_uses_input_order(self):
+        ordered_rate = summarise([1, 2, 3, 4])["zero_crossing_rate"]
+        mixed_rate = summarise([1, 4, 2, 3])["zero_crossing_rate"]
+        self.assertAlmostEqual(ordered_rate, 0.0, places=6)
+        self.assertAlmostEqual(mixed_rate, 0.0, places=6)
+        sign_flip = summarise([1, 2, -3, 4])["zero_crossing_rate"]
+        self.assertAlmostEqual(sign_flip, 2.0 / 3.0, places=6)
+
+
 class ValidationTest(unittest.TestCase):
     """Each rejected input must carry a stable error code."""
 

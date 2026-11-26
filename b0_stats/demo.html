@@ -6,13 +6,14 @@
 <title>B0 统计摘要演示</title>
 <style>
   :root {
-    --page: #f5f6f8;
+    --page: #f4f6f8;
     --card: #ffffff;
-    --line: #e2e5e9;
-    --text: #1c2024;
+    --line: #e3e7eb;
+    --text: #1b2026;
     --muted: #5f6b76;
+    --faint: #9aa3ab;
     --accent: #1d5f8a;
-    --accent-soft: #e8f1f7;
+    --accent-soft: #e9f1f7;
     --danger: #a32d2d;
     --danger-soft: #fcebeb;
     --ok: #1d7a52;
@@ -21,35 +22,41 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    padding: 28px 20px 48px;
+    padding: 0 20px 44px;
     background: var(--page);
     color: var(--text);
     font: 14px/1.65 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
   }
-  header, main { max-width: 1060px; margin: 0 auto; }
+  .topbar { height: 3px; background: var(--accent); margin: 0 -20px 26px; }
+  header, main, footer { max-width: 1080px; margin: 0 auto; }
   h1 { margin: 0 0 6px; font-size: 20px; font-weight: 600; letter-spacing: .2px; }
-  .sub { margin: 0; color: var(--muted); font-size: 13px; }
+  .sub { margin: 0; color: var(--muted); font-size: 13px; max-width: 780px; }
   .status {
     display: inline-flex; align-items: center; gap: 7px;
     margin-top: 12px; padding: 4px 10px;
     border: 1px solid var(--line); border-radius: 999px;
-    background: var(--card); color: var(--muted);
-    font-size: 12px;
+    background: var(--card); color: var(--muted); font-size: 12px;
   }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #b4b2a9; }
   .dot.ok { background: var(--ok); }
   .dot.bad { background: var(--danger); }
-  main { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+  main { display: grid; grid-template-columns: 440px 1fr; gap: 18px; margin-top: 20px; align-items: start; }
   .card {
     background: var(--card); border: 1px solid var(--line);
-    border-radius: 12px; padding: 18px 18px 20px;
+    border-radius: 12px; padding: 16px 18px 18px;
   }
-  h2 { margin: 0 0 14px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 1px; }
+  h2 {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 14px; font-size: 13px; font-weight: 600;
+    color: var(--muted); letter-spacing: 1px;
+  }
+  h2::before { content: ""; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); }
+  h2 .count { margin-left: auto; font-weight: 400; letter-spacing: 0; color: var(--faint); font-family: var(--mono); font-size: 11px; }
   label { display: block; margin-bottom: 8px; font-size: 13px; color: var(--muted); }
   textarea {
-    width: 100%; min-height: 96px; resize: vertical; padding: 10px 12px;
+    width: 100%; min-height: 92px; resize: vertical; padding: 10px 12px;
     border: 1px solid var(--line); border-radius: 8px;
-    font-family: var(--mono); font-size: 13px; line-height: 1.7;
+    font-family: var(--mono); font-size: 13px; line-height: 1.75;
     color: var(--text); background: #fbfcfd;
   }
   textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
@@ -57,6 +64,7 @@
   .presets button {
     padding: 5px 10px; font-size: 12px; color: var(--muted); cursor: pointer;
     background: #fff; border: 1px solid var(--line); border-radius: 999px;
+    transition: border-color .15s, color .15s;
   }
   .presets button:hover { border-color: var(--accent); color: var(--accent); }
   .actions { display: flex; gap: 10px; }
@@ -65,29 +73,43 @@
     color: #fff; background: var(--accent); border: 1px solid var(--accent);
     border-radius: 8px;
   }
+  button.primary:hover { background: #174d70; }
   button.ghost {
     padding: 9px 16px; font-size: 13px; cursor: pointer;
     color: var(--muted); background: #fff; border: 1px solid var(--line);
     border-radius: 8px;
   }
+  button.ghost:hover { border-color: var(--faint); }
   .hint { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
-  code { font-family: var(--mono); font-size: 12px; }
+  code { font-family: var(--mono); }
+  .hint code { font-size: 11px; color: var(--accent); }
   .big-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .big {
-    padding: 12px 10px; background: #fbfcfd;
-    border: 1px solid var(--line); border-radius: 8px; text-align: center;
+    padding: 12px 8px 10px; background: #fbfcfd; text-align: center;
+    border: 1px solid var(--line); border-radius: 8px;
+    transition: border-color .15s, background .15s;
   }
-  .big .num { display: block; font-family: var(--mono); font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+  .big:hover { border-color: #c6d8e4; background: #f8fbfd; }
+  .big .num {
+    display: block; font-family: var(--mono); font-size: 16px; font-weight: 600;
+    overflow-wrap: anywhere;
+  }
   .big .label { display: block; margin-top: 4px; font-size: 11px; color: var(--muted); }
-  dl.small-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 14px;
-    margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line);
+  .group { margin-top: 16px; }
+  .block-label {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; font-size: 12px; color: var(--muted);
   }
-  dl.small-grid div { display: flex; justify-content: space-between; gap: 8px; }
-  dl.small-grid dt { font-size: 12px; color: var(--muted); }
-  dl.small-grid dd { margin: 0; font-family: var(--mono); font-size: 12px; }
-  .outliers { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .block-label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted); }
+  .block-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .kv { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 20px; margin: 0; }
+  .kv div { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+  .kv dt { font-size: 12px; color: var(--muted); }
+  .kv dd { margin: 0; font-family: var(--mono); font-size: 12px; }
+  .spark-wrap {
+    padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+    background: #fbfcfd;
+  }
+  .spark { display: block; width: 100%; height: 108px; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     padding: 2px 9px; border-radius: 999px;
@@ -97,40 +119,41 @@
   .chip.none { background: var(--accent-soft); color: var(--accent); }
   details { margin-top: 14px; }
   summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+  summary:hover { color: var(--accent); }
   pre {
-    margin: 8px 0 0; padding: 10px 12px; overflow: auto;
+    margin: 8px 0 0; padding: 10px 12px; overflow: auto; max-height: 260px;
     background: #fbfcfd; border: 1px solid var(--line); border-radius: 8px;
-    font-family: var(--mono); font-size: 12px; line-height: 1.65;
+    font-family: var(--mono); font-size: 12px; line-height: 1.6;
   }
-  .error {
-    padding: 12px 14px; border-radius: 8px;
-    background: var(--danger-soft); border: 1px solid #f0c9c9;
-  }
+  .error { padding: 12px 14px; border-radius: 8px; background: var(--danger-soft); border: 1px solid #f0c9c9; }
   .error .code { font-family: var(--mono); font-weight: 600; color: var(--danger); }
   .error p { margin: 6px 0 0; font-size: 12px; color: #6d3a3a; }
-  .empty { padding: 26px 0; text-align: center; color: #9aa3ab; font-size: 13px; }
+  .empty { padding: 40px 0; text-align: center; color: var(--faint); font-size: 13px; }
   .hidden { display: none; }
-  @media (max-width: 860px) {
+  footer { margin-top: 22px; font-size: 12px; color: var(--faint); }
+  @media (max-width: 900px) {
     main { grid-template-columns: 1fr; }
     .big-grid { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
 <body>
+<div class="topbar"></div>
 <header>
   <h1>统计摘要演示</h1>
-  <p class="sub">输入一组测量值，得到计数、均值、中位数、样本标准差、四分位与 IQR 异常值提示。同一组数字也可用 curl 复现，两者走同一条接口。</p>
+  <p class="sub">输入一组测量值，得到集中趋势、离散程度、极值与波形形态指标，并标记 IQR 异常值。页面调用的就是 <code>POST /api/summary</code>，与命令行结果完全一致，无需接收者自行构造请求。</p>
   <span class="status"><span id="health-dot" class="dot"></span><span id="health-text">正在检查服务…</span></span>
 </header>
 
 <main>
   <section class="card">
-    <h2>输入</h2>
+    <h2>输入<span class="count" id="point-count">6 个点</span></h2>
     <label for="values">测量值：逗号、空格或换行分隔；也可直接粘贴 JSON 数组</label>
     <textarea id="values" spellcheck="false">1, 2, 3, 4, 5, 100</textarea>
     <div class="presets">
       <button type="button" data-preset="1, 2, 3, 4">正常四样本</button>
       <button type="button" data-preset="1, 2, 3, 4, 5, 100">含一个异常值</button>
+      <button type="button" data-preset="1, -1, 2, -2, 3, -3">正负交替</button>
       <button type="button" data-preset="7">只有 1 个样本</button>
       <button type="button" data-preset="">空数组</button>
       <button type="button" data-preset="a, 2">非数值</button>
@@ -139,7 +162,8 @@
       <button type="button" id="run" class="primary">计算摘要</button>
       <button type="button" id="clear" class="ghost">清空结果</button>
     </div>
-    <p class="hint">请求：<code id="request-line">POST /api/summary</code>　快捷键 Ctrl + Enter</p>
+    <p class="hint">请求：<code id="request-line">POST /api/summary</code></p>
+    <p class="hint">快捷键 Ctrl + Enter　输入框只做分隔符拆解，合法性由服务端判定</p>
   </section>
 
   <section class="card">
@@ -153,18 +177,41 @@
         <div class="big"><span class="num" id="r-median">-</span><span class="label">中位数 median</span></div>
         <div class="big"><span class="num" id="r-std">-</span><span class="label">样本标准差</span></div>
       </div>
-      <dl class="small-grid">
-        <div><dt>最小值</dt><dd id="r-min">-</dd></div>
-        <div><dt>最大值</dt><dd id="r-max">-</dd></div>
-        <div><dt>Q1</dt><dd id="r-q1">-</dd></div>
-        <div><dt>Q3</dt><dd id="r-q3">-</dd></div>
-        <div><dt>IQR</dt><dd id="r-iqr">-</dd></div>
-        <div><dt>异常值数</dt><dd id="r-outlier-count">-</dd></div>
-      </dl>
-      <div class="outliers">
+
+      <div class="group">
+        <span class="block-label">离散程度</span>
+        <dl class="kv">
+          <div><dt>样本方差</dt><dd id="r-var-s">-</dd></div>
+          <div><dt>总体方差</dt><dd id="r-var-p">-</dd></div>
+          <div><dt>均方根 rms</dt><dd id="r-rms">-</dd></div>
+          <div><dt>四分位距 IQR</dt><dd id="r-iqr">-</dd></div>
+        </dl>
+      </div>
+
+      <div class="group">
+        <span class="block-label">极值与形态</span>
+        <dl class="kv">
+          <div><dt>最小值</dt><dd id="r-min">-</dd></div>
+          <div><dt>最大值</dt><dd id="r-max">-</dd></div>
+          <div><dt>绝对峰值</dt><dd id="r-peak">-</dd></div>
+          <div><dt>峰峰值</dt><dd id="r-ptp">-</dd></div>
+          <div><dt>过零率</dt><dd id="r-zcr">-</dd></div>
+          <div><dt>异常值数</dt><dd id="r-outlier-count">-</dd></div>
+          <div><dt>Q1</dt><dd id="r-q1">-</dd></div>
+          <div><dt>Q3</dt><dd id="r-q3">-</dd></div>
+        </dl>
+      </div>
+
+      <div class="group">
+        <span class="block-label">输入序列（按输入顺序，红点为过零点）</span>
+        <div class="spark-wrap"><svg id="spark" class="spark" viewBox="0 0 480 108" preserveAspectRatio="none" role="img" aria-label="输入序列折线图"></svg></div>
+      </div>
+
+      <div class="group">
         <span class="block-label">异常值（超出 1.5 × IQR 栅栏）</span>
         <div class="chips" id="r-outliers"></div>
       </div>
+
       <details>
         <summary>原始响应 JSON（可逐字核对）</summary>
         <pre id="r-json"></pre>
@@ -174,11 +221,30 @@
   </section>
 </main>
 
+<footer>B0 个人实验 · 研究生高级程序设计（实践）· 本页为只读演示层，统计与校验全部由服务端完成</footer>
+
 <script>
   var $ = function (id) { return document.getElementById(id); };
   var textarea = $("values");
+  var SVG_NS = "http://www.w3.org/2000/svg";
 
   function setText(id, value) { $(id).textContent = value; }
+
+  function countPoints(text) {
+    var trimmed = text.trim();
+    if (trimmed === "") { return 0; }
+    if (trimmed.charAt(0) === "[") {
+      try {
+        return JSON.parse(trimmed).length;
+      } catch (err) { return 0; }
+    }
+    return trimmed.split(/[\s,，、;；]+/).filter(Boolean).length;
+  }
+
+  function refreshCount() {
+    var total = countPoints(textarea.value);
+    setText("point-count", total === 0 ? "未输入" : total + " 个点");
+  }
 
   function showError(status, code, message, extra) {
     var box = $("error");
@@ -202,9 +268,7 @@
     $("empty").classList.add("hidden");
   }
 
-  function hideError() {
-    $("error").classList.add("hidden");
-  }
+  function hideError() { $("error").classList.add("hidden"); }
 
   function parseValues(text) {
     var trimmed = text.trim();
@@ -216,17 +280,95 @@
     });
   }
 
-  function render(data, elapsed) {
+  function crossingIndexes(values) {
+    var indexes = [];
+    for (var i = 1; i < values.length; i += 1) {
+      if ((values[i - 1] >= 0) !== (values[i] >= 0)) { indexes.push(i); }
+    }
+    return indexes;
+  }
+
+  function clearNode(node) {
+    while (node.firstChild) { node.removeChild(node.firstChild); }
+  }
+
+  function svgNode(name, attributes, text) {
+    var node = document.createElementNS(SVG_NS, name);
+    Object.keys(attributes).forEach(function (key) {
+      node.setAttribute(key, attributes[key]);
+    });
+    if (text !== undefined) { node.textContent = text; }
+    return node;
+  }
+
+  function drawSpark(values) {
+    var svg = $("spark");
+    clearNode(svg);
+    var numeric = values.filter(function (value) { return typeof value === "number"; });
+    if (numeric.length !== values.length || values.length < 2) {
+      svg.appendChild(svgNode("text", {
+        x: 240, y: 56, "text-anchor": "middle", "font-size": 12, fill: "#9aa3ab"
+      }, "需要至少 2 个数值才能绘图"));
+      return;
+    }
+
+    var width = 480, height = 108, padX = 10, padY = 12;
+    var low = Math.min.apply(null, values);
+    var high = Math.max.apply(null, values);
+    var span = high - low || 1;
+    var stepX = (width - padX * 2) / (values.length - 1);
+
+    function px(index) { return padX + index * stepX; }
+    function py(value) { return height - padY - (value - low) / span * (height - padY * 2); }
+
+    svg.appendChild(svgNode("line", {
+      x1: padX, x2: width - padX, y1: py(low), y2: py(low),
+      stroke: "#e3e7eb", "stroke-width": 0.5
+    }));
+
+    if (low < 0 && high > 0) {
+      svg.appendChild(svgNode("line", {
+        x1: padX, x2: width - padX, y1: py(0), y2: py(0),
+        stroke: "#c8d3db", "stroke-width": 0.5, "stroke-dasharray": "3 3"
+      }));
+    }
+
+    var points = values.map(function (value, index) {
+      return px(index) + "," + py(value);
+    }).join(" ");
+    svg.appendChild(svgNode("polyline", {
+      points: points, fill: "none", stroke: "#1d5f8a",
+      "stroke-width": 1.4, "stroke-linejoin": "round"
+    }));
+
+    crossingIndexes(values).slice(0, 60).forEach(function (index) {
+      svg.appendChild(svgNode("circle", {
+        cx: px(index), cy: py(values[index]), r: 2.6, fill: "#a32d2d"
+      }));
+    });
+
+    svg.appendChild(svgNode("circle", {
+      cx: px(values.indexOf(high)), cy: py(high), r: 3, fill: "#1d5f8a"
+    }));
+  }
+
+  function render(data, elapsed, values) {
     setText("r-count", String(data.count));
     setText("r-mean", String(data.mean));
     setText("r-median", String(data.median));
     setText("r-std", String(data.std_sample));
+    setText("r-var-s", String(data.variance_sample));
+    setText("r-var-p", String(data.variance_population));
+    setText("r-rms", String(data.rms));
+    setText("r-iqr", String(data.iqr));
     setText("r-min", String(data.min));
     setText("r-max", String(data.max));
+    setText("r-peak", String(data.peak));
+    setText("r-ptp", String(data.peak_to_peak));
+    setText("r-zcr", String(data.zero_crossing_rate));
+    setText("r-outlier-count", String(data.outlier_count));
     setText("r-q1", String(data.q1));
     setText("r-q3", String(data.q3));
-    setText("r-iqr", String(data.iqr));
-    setText("r-outlier-count", String(data.outlier_count));
 
     var chips = $("r-outliers");
     chips.textContent = "";
@@ -244,8 +386,9 @@
       });
     }
 
+    drawSpark(values);
     $("r-json").textContent = JSON.stringify(data, null, 2);
-    setText("r-meta", "HTTP 200 · 往返 " + elapsed + " ms · 服务端保留 6 位小数");
+    setText("r-meta", "HTTP 200 · 往返 " + elapsed + " ms · 计算量保留 6 位小数，过零率按输入顺序统计");
 
     hideError();
     $("empty").classList.add("hidden");
@@ -278,7 +421,7 @@
           "往返 " + elapsed + " ms　同一请求可用 curl 复现。");
         return;
       }
-      render(result.data, elapsed);
+      render(result.data, elapsed, values);
     }).catch(function (err) {
       showError("本地", "network_error", "请求未送达：" + err.message);
     });
@@ -304,6 +447,7 @@
   document.querySelectorAll(".presets button").forEach(function (button) {
     button.addEventListener("click", function () {
       textarea.value = button.getAttribute("data-preset");
+      refreshCount();
       textarea.focus();
     });
   });
@@ -314,10 +458,12 @@
     $("empty").classList.remove("hidden");
     $("request-line").textContent = "POST /api/summary";
   });
+  textarea.addEventListener("input", refreshCount);
   textarea.addEventListener("keydown", function (event) {
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) { run(); }
   });
 
+  refreshCount();
   checkHealth();
   run();
 </script>
