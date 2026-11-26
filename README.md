@@ -134,7 +134,14 @@ python -m coverage report -m
 （唯一未覆盖行为 `app.py` 第 105 行 `if __name__ == "__main__"` 下的调用）。
 
 CI 位于 `.github/workflows/check.yml`，在每次推送 `main` 与每个 PR 上执行上述四步；
-任一步失败即返回非零退出码，不设 `continue-on-error`，也不跳过测试。
+Actions 的 `run` 默认以 `bash -e` 执行，任一步非零退出即中断并置红，不设
+`continue-on-error`，也不跳过测试。
+
+同内容另有一份 Gitee Go 流水线（`.workflow/b0-check.yml`），它需要两处显式处理才等价：
+首条命令 `set -e`（平台的 `/opt/COMMAND.sh` 默认不中断），以及用 `python3 -m ruff`
+而非裸 `ruff`（容器内依赖装在 `~/.local/bin`，不在 `PATH`）。2026-11-26 的一次 Gitee
+运行同时踩到这两点，静态与格式检查未执行而任务仍显示成功，成因与复核见
+`docs/check-log.md` 第七节。
 
 ## 六 限制
 

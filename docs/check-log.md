@@ -66,7 +66,37 @@
 演示页的 C16–C19 不新增接口：页面调用的仍是 C5–C7 的 `GET /health` 与 `POST /api/summary`，
 故 C5–C15 的原有结论不受影响。
 
-## 七 未覆盖与待办
+## 七 CI 流水线执行记录（2026-11-26 补充）
+
+CI 的判定不能只看平台给出的绿点，须以命令是否真正执行、退出码是否传递为准。本节记录
+两处实际运行证据、一次失败注入实验，以及由此发现并修复的配置缺陷。
+
+| 编号 | 检查 | 预期 | 实际 | 结论 |
+| --- | --- | --- | --- | --- |
+| C24 | GitHub Actions，`main@a3b5a6d` | 四步全部执行且成功 | run `45810164843`，7 个步骤均 `success`，日志含 `All checks passed!`、`Ran 47 tests`、覆盖率表 | 一致 |
+| C25 | Gitee Go `#2`，`master@d0a31de` 的日志正文 | 四步全部执行且成功 | 第 5、6 行输出 `/opt/COMMAND.sh: line 5: ruff: command not found`（127）；第 7 步 `Ran 41 tests in 2.018s` / `OK`；末尾仍打印 `The task build Successfully!` | **不一致**：静态与格式检查未执行，任务却被判为成功 |
+| C26 | 本地等价复现：在 `stats.py` 首行插入 `import os` | 有 `set -e` 时应在 `ruff check` 处中断，不进入测试 | 中断，退出码 1，输出 `F401 imported but unused`，全程未出现 `Ran 47 tests`；去掉 `set -e` 后同样内容继续跑完 47 个用例并返回 0 | 一致，与 C25 的成因吻合 |
+| C27 | 修复后重新推送 `master`，观察新记录 | 四步均真实执行；任一步失败则任务为红 | 待云端复核（需在 Gitee 流水线页面查看新增记录与核分扣减） | 待核对 |
+
+C25 的两个叠加成因：
+
+1. **工具不在 `PATH` 上**。`pip3 install` 提示 `normal site-packages is not writeable`，
+   依赖被装进 `/root/.local/bin`（同一日志里 pip 与 coverage 的入口脚本都提示该目录
+   "is not on PATH"），于是裸命令 `ruff` 解析失败，退出码 127。
+2. **失败不中断**。Gitee Go 生成的 `/opt/COMMAND.sh` 没有 `set -e`，第 5、6 行失败后继续
+   执行第 7、8 行；任务退出码取自脚本末尾，测试既然通过，整条任务即为"成功"。
+
+同一提交内的修复：
+
+- 四条校验命令改为 `python3 -m ruff` / `python3 -m coverage` 形式，`-m` 走 `sys.path`，
+  不依赖入口脚本是否在 `PATH` 上；
+- 补 `export PATH="$PATH:/root/.local/bin"`，与本机 pip 的实际安装位置对齐；
+- 首条命令固定为 `set -e`，使任一步非零退出立即中断任务；
+- 删去 `python3 -m pip install --upgrade pip`：该步在 #2 的日志中耗时约 2 分钟
+  （18:02:30 → 18:04:37 装 pip-26.0.1），约占单次运行的一半核分，对固定版本的
+  依赖 install 无必要。
+
+## 八 未覆盖与待办
 
 1. `app.py:105`（`if __name__ == "__main__"` 内的 `main()` 调用）未计入覆盖率，属入口行；
    `main()` 本身已由 `MainTest` 覆盖，包括就绪输出与 `server_close()` 的调用。
