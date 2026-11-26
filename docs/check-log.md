@@ -76,7 +76,7 @@ CI 的判定不能只看平台给出的绿点，须以命令是否真正执行�
 | C24 | GitHub Actions，`main@a3b5a6d` | 四步全部执行且成功 | run `45810164843`，7 个步骤均 `success`，日志含 `All checks passed!`、`Ran 47 tests`、覆盖率表 | 一致 |
 | C25 | Gitee Go `#2`，`master@d0a31de` 的日志正文 | 四步全部执行且成功 | 第 5、6 行输出 `/opt/COMMAND.sh: line 5: ruff: command not found`（127）；第 7 步 `Ran 41 tests in 2.018s` / `OK`；末尾仍打印 `The task build Successfully!` | **不一致**：静态与格式检查未执行，任务却被判为成功 |
 | C26 | 本地等价复现：在 `stats.py` 首行插入 `import os` | 有 `set -e` 时应在 `ruff check` 处中断，不进入测试 | 中断，退出码 1，输出 `F401 imported but unused`，全程未出现 `Ran 47 tests`；去掉 `set -e` 后同样内容继续跑完 47 个用例并返回 0 | 一致，与 C25 的成因吻合 |
-| C27 | 修复后重新推送 `master`，观察新记录 | 四步均真实执行；任一步失败则任务为红 | 待云端复核（需在 Gitee 流水线页面查看新增记录与核分扣减） | 待核对 |
+| C27 | 修复后推送 `ba3e400`，Gitee Go 新记录 `#4` | 四步均真实执行；任一步失败则任务为红 | 19:33:23–19:33:29 共 **6 秒**；逐行出现 `All checks passed!`、`7 files already formatted`、`Ran 47 tests`、`TOTAL 170 1 99%`；`set -e` 生效（首行即 `+ set -e`），末尾 `The task build Successfully!` | 一致，四步与本地、GitHub 完全对应 |
 
 C25 的两个叠加成因：
 
@@ -95,6 +95,11 @@ C25 的两个叠加成因：
 - 删去 `python3 -m pip install --upgrade pip`：该步在 #2 的日志中耗时约 2 分钟
   （18:02:30 → 18:04:37 装 pip-26.0.1），约占单次运行的一半核分，对固定版本的
   依赖 install 无必要。
+
+复核结果（`#4`，`master@ba3e400`，19:33:23–19:33:29）：四步全部留下输出，`ruff` 不再
+报 `command not found`；总耗时由 134 秒降到 6 秒，缩短的部分几乎全部来自删去的 pip
+自升级。同一份代码在本地、GitHub Actions（run `45811591144`）与 Gitee Go 三处的用例数
+与覆盖率一致（47 个用例、99%），可认为 CI 判定已与本地口径对齐。
 
 ## 八 未覆盖与待办
 
